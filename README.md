@@ -22,10 +22,28 @@ npm run build
 
 ### Environment Variables
 
-| Variable      | Default     | Description                                |
-| ------------- | ----------- | ------------------------------------------ |
-| `COZO_ENGINE` | `mem`       | Storage engine: `mem`, `sqlite`, `rocksdb` |
-| `COZO_PATH`   | `./cozo.db` | Database path (ignored for `mem`)          |
+| Variable          | Default     | Description                                |
+| ----------------- | ----------- | ------------------------------------------ |
+| `COZO_ENGINE`     | `mem`       | Storage engine: `mem`, `sqlite`, `rocksdb` |
+| `COZO_PATH`       | `./cozo.db` | Database path (ignored for `mem`)          |
+| `MCP_TRANSPORT`   | `stdio`     | Transport: `stdio` or `http`               |
+| `MCP_HTTP_PORT`   | `3100`      | HTTP server port (when transport=http)     |
+| `MCP_CORS_ORIGIN` | `*`         | CORS allowed origins                       |
+
+### Transport Modes
+
+**stdio (default)** - For Claude Desktop, Gemini CLI:
+
+```bash
+node dist/index.js
+```
+
+**http** - For PWA/browser clients:
+
+```bash
+MCP_TRANSPORT=http node dist/index.js
+# Server: http://localhost:3100/mcp
+```
 
 ### Claude Desktop Configuration
 

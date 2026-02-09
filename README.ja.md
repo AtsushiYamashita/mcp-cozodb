@@ -24,10 +24,28 @@ npm run build
 
 ### 環境変数
 
-| 変数          | デフォルト  | 説明                                           |
-| ------------- | ----------- | ---------------------------------------------- |
-| `COZO_ENGINE` | `mem`       | ストレージエンジン: `mem`, `sqlite`, `rocksdb` |
-| `COZO_PATH`   | `./cozo.db` | データベースパス (`mem`では無視)               |
+| 変数              | デフォルト  | 説明                                           |
+| ----------------- | ----------- | ---------------------------------------------- |
+| `COZO_ENGINE`     | `mem`       | ストレージエンジン: `mem`, `sqlite`, `rocksdb` |
+| `COZO_PATH`       | `./cozo.db` | データベースパス (`mem`では無視)               |
+| `MCP_TRANSPORT`   | `stdio`     | トランスポート: `stdio` or `http`              |
+| `MCP_HTTP_PORT`   | `3100`      | HTTPサーバーポート (transport=http時)          |
+| `MCP_CORS_ORIGIN` | `*`         | CORS許可オリジン                               |
+
+### トランスポートモード
+
+**stdio (デフォルト)** - Claude Desktop, Gemini CLI向け:
+
+```bash
+node dist/index.js
+```
+
+**http** - PWA/ブラウザクライアント向け:
+
+```bash
+MCP_TRANSPORT=http node dist/index.js
+# サーバー: http://localhost:3100/mcp
+```
 
 ### Claude Desktop設定
 

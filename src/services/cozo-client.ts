@@ -19,8 +19,10 @@ export interface RelationInfo {
 
 export interface ColumnInfo {
   name: string;
-  type: string;
   is_key: boolean;
+  index: number;
+  type: string;
+  has_default: boolean;
 }
 
 export interface CozoClientConfig {
@@ -80,11 +82,14 @@ export async function describeRelation(
   db: CozoDb,
   relationName: string
 ): Promise<ColumnInfo[]> {
+  // ::columns returns: [column, is_key, index, type, has_default]
   const result = await db.run(`::columns ${relationName}`);
   return result.rows.map((row: unknown[]) => ({
     name: String(row[0]),
-    type: String(row[1]),
-    is_key: Boolean(row[2])
+    is_key: Boolean(row[1]),
+    index: Number(row[2]),
+    type: String(row[3]),
+    has_default: Boolean(row[4])
   }));
 }
 
@@ -98,46 +103,64 @@ export async function createRelation(
 ): Promise<void> {
   await db.run(`:create ${relationName} ${schema}`);
 }
+/**
+ * Build CozoDB relation spec clause from schema.
+ * Returns column bindings and the { key => value } clause.
+ */
+async function buildRelationSpec(
+  db: CozoDb,
+  relationName: string
+): Promise<{ allBindings: string; keyBindings: string; clause: string }> {
+  const schema = await describeRelation(db, relationName);
+  const keys = schema.filter(c => c.is_key).map(c => c.name);
+  const values = schema.filter(c => !c.is_key).map(c => c.name);
+  const allBindings = [...keys, ...values].join(", ");
+  const keyBindings = keys.join(", ");
+  const clause = values.length === 0
+    ? `{ ${keyBindings} }`
+    : `{ ${keyBindings} => ${values.join(", ")} }`;
+  return { allBindings, keyBindings, clause };
+}
 
 /**
- * Insert or update data
+ * Insert or update data using parameterized query.
+ * Uses $data parameter to avoid string escaping issues.
  */
 export async function putData(
   db: CozoDb,
   relationName: string,
   data: unknown[][]
 ): Promise<number> {
-  const placeholders = data.map((_, i) => 
-    `row${i}` 
-  );
-  
-  const params: Record<string, unknown> = {};
-  data.forEach((row, i) => {
-    params[`row${i}`] = row;
-  });
+  if (data.length === 0) {
+    return 0;
+  }
 
-  // Build the query dynamically
-  const dataLiteral = data.map(row => 
-    `[${row.map(v => JSON.stringify(v)).join(", ")}]`
-  ).join(", ");
-  
-  await db.run(`?[..row] <- [${dataLiteral}] :put ${relationName} { ..row }`);
+  const spec = await buildRelationSpec(db, relationName);
+  await db.run(
+    `?[${spec.allBindings}] <- $data :put ${relationName} ${spec.clause}`,
+    { data }
+  );
   return data.length;
 }
 
 /**
- * Remove data from a relation
+ * Remove data from a relation using parameterized query.
+ * Uses $keys parameter to avoid string escaping issues.
  */
 export async function removeData(
   db: CozoDb,
   relationName: string,
   keys: unknown[][]
 ): Promise<number> {
-  const dataLiteral = keys.map(row => 
-    `[${row.map(v => JSON.stringify(v)).join(", ")}]`
-  ).join(", ");
-  
-  await db.run(`?[..key] <- [${dataLiteral}] :rm ${relationName} { ..key }`);
+  if (keys.length === 0) {
+    return 0;
+  }
+
+  const spec = await buildRelationSpec(db, relationName);
+  await db.run(
+    `?[${spec.keyBindings}] <- $keys :rm ${relationName} { ${spec.keyBindings} }`,
+    { keys }
+  );
   return keys.length;
 }
 

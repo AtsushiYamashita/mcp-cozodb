@@ -26,7 +26,7 @@ const DB_ENGINE = (process.env.COZO_ENGINE || "mem") as "mem" | "sqlite" | "rock
 const DB_PATH = process.env.COZO_PATH || "./cozo.db";
 const TRANSPORT = process.env.MCP_TRANSPORT || "stdio";
 const HTTP_PORT = parseInt(process.env.MCP_HTTP_PORT || "3100", 10);
-const CORS_ORIGIN = process.env.MCP_CORS_ORIGIN || "*";
+const CORS_ORIGIN = process.env.MCP_CORS_ORIGIN || "localhost";
 
 // Create MCP server
 const server = new McpServer({

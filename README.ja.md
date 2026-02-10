@@ -82,7 +82,7 @@ cozo_put({
 });
 
 // 3. クエリ
-cozo_query({ query: "?[id, name] := users[id, name]" });
+cozo_query({ query: "?[id, name] := *users[id, name]" });
 ```
 
 > [!WARNING]
@@ -91,8 +91,9 @@ cozo_query({ query: "?[id, name] := users[id, name]" });
 ## 開発
 
 ```bash
-npm run dev                                          # ウォッチモード
-npx @modelcontextprotocol/inspector node dist/index.js  # MCP Inspectorでテスト
+npm run dev                                             # ウォッチモード
+npm run test:once                                       # テスト実行
+npx @modelcontextprotocol/inspector node dist/index.js  # MCP Inspector
 ```
 
 ## ライセンス

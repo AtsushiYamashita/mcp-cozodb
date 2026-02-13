@@ -11,17 +11,44 @@ npm install && npm run build
 node dist/index.js  # stdioモード（Claude Desktop、Gemini CLI）
 ```
 
-## 設定
+## クイックセットアップ
+
+**自動設定**（推奨）:
+
+```bash
+npm install && npm run build
+npm run setup  # 対話形式でセットアップ
+```
+
+または、対象エージェントを直接指定:
+
+```bash
+npm run setup -- -t claude        # Claude Desktop
+npm run setup -- -t gemini        # Gemini CLI
+npm run setup -- -t antigravity   # Google Antigravity
+```
+
+セットアップスクリプトは以下を自動実行:
+
+1. エージェントの設定ファイルを自動検出
+2. データベースエンジン (mem/sqlite/rocksdb) を選択
+3. 設定を自動書き込み
+4. エージェント別の次のステップを表示
+
+---
+
+## 手動設定
 
 ### 環境変数
 
-| 変数              | デフォルト  | 説明                                   |
-| ----------------- | ----------- | -------------------------------------- |
-| `COZO_ENGINE`     | `mem`       | ストレージ: `mem`, `sqlite`, `rocksdb` |
-| `COZO_PATH`       | `./cozo.db` | データベースパス（`mem`では無視）      |
-| `MCP_TRANSPORT`   | `stdio`     | トランスポート: `stdio` or `http`      |
-| `MCP_HTTP_PORT`   | `3100`      | HTTPポート（transport=http時）         |
-| `MCP_CORS_ORIGIN` | `localhost` | CORS許可オリジン（カンマ区切り）       |
+| 変数                 | デフォルト  | 説明                                   |
+| -------------------- | ----------- | -------------------------------------- |
+| `COZO_ENGINE`        | `mem`       | ストレージ: `mem`, `sqlite`, `rocksdb` |
+| `COZO_PATH`          | `./cozo.db` | データベースパス（`mem`では無視）      |
+| `COZO_QUERY_TIMEOUT` | `30000`     | クエリタイムアウト(ms, 0=無効)         |
+| `MCP_TRANSPORT`      | `stdio`     | トランスポート: `stdio` or `http`      |
+| `MCP_HTTP_PORT`      | `3100`      | HTTPポート（transport=http時）         |
+| `MCP_CORS_ORIGIN`    | `localhost` | CORS許可オリジン（カンマ区切り）       |
 
 ### クライアント設定
 

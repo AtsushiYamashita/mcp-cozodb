@@ -9,17 +9,44 @@ npm install && npm run build
 node dist/index.js  # stdio mode (Claude Desktop, Gemini CLI)
 ```
 
-## Configuration
+## Quick Setup
+
+**Automatic configuration** (recommended):
+
+```bash
+npm install && npm run build
+npm run setup  # Interactive setup
+```
+
+Or specify target agent directly:
+
+```bash
+npm run setup -- -t claude        # Claude Desktop
+npm run setup -- -t gemini        # Gemini CLI
+npm run setup -- -t antigravity   # Google Antigravity
+```
+
+The setup script will:
+
+1. Auto-detect your agent's config file
+2. Prompt for database engine (mem/sqlite/rocksdb)
+3. Write configuration automatically
+4. Show next steps for your agent
+
+---
+
+## Manual Configuration
 
 ### Environment Variables
 
-| Variable          | Default     | Description                         |
-| ----------------- | ----------- | ----------------------------------- |
-| `COZO_ENGINE`     | `mem`       | Storage: `mem`, `sqlite`, `rocksdb` |
-| `COZO_PATH`       | `./cozo.db` | Database path (ignored for `mem`)   |
-| `MCP_TRANSPORT`   | `stdio`     | Transport: `stdio` or `http`        |
-| `MCP_HTTP_PORT`   | `3100`      | HTTP port (when transport=http)     |
-| `MCP_CORS_ORIGIN` | `localhost` | CORS origins (comma-separated)      |
+| Variable             | Default     | Description                          |
+| -------------------- | ----------- | ------------------------------------ |
+| `COZO_ENGINE`        | `mem`       | Storage: `mem`, `sqlite`, `rocksdb`  |
+| `COZO_PATH`          | `./cozo.db` | Database path (ignored for `mem`)    |
+| `COZO_QUERY_TIMEOUT` | `30000`     | Query timeout in ms (0 = no timeout) |
+| `MCP_TRANSPORT`      | `stdio`     | Transport: `stdio` or `http`         |
+| `MCP_HTTP_PORT`      | `3100`      | HTTP port (when transport=http)      |
+| `MCP_CORS_ORIGIN`    | `localhost` | CORS origins (comma-separated)       |
 
 ### Client Configuration
 
@@ -85,6 +112,16 @@ cozo_query({ query: "?[id, name] := *users[id, name]" });
 
 > [!WARNING]
 > **HTTP mode exposes the database without authentication.** Use `stdio` for production. See [SECURITY.md](SECURITY.md) for details.
+
+## Deployment
+
+See [DEPLOYMENT.md](DEPLOYMENT.md) for:
+
+- Production deployment guide
+- Graceful shutdown verification
+- Backup & recovery procedures
+- Reverse proxy setup (HTTP mode)
+- Monitoring recommendations
 
 ## Development
 

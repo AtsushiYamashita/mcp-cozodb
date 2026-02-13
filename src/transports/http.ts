@@ -55,14 +55,15 @@ export interface HttpTransportConfig {
 // ---------------------------------------------------------------------------
 
 /**
- * Simple in-memory per-IP rate limiter.
+ * Simple in-memory per-IP rate limiter with automatic cleanup.
  *
  * Uses a sliding window: each IP gets `max` requests within `windowMs`.
  * The window resets once `windowMs` has elapsed since the first request.
  *
+ * Cleanup runs every 60 seconds to prevent memory leaks from expired entries.
+ *
  * Limitations:
  * - Not shared across processes (single-instance only)
- * - No automatic cleanup of stale entries (acceptable for dev/small-scale)
  * - Trusts `req.ip` / `req.socket.remoteAddress` (can be spoofed without proxy)
  */
 const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
@@ -138,6 +139,21 @@ export async function startHttpTransport(
 
   // --- Middleware ---
   app.use(createRateLimiter(windowMs, maxRequests));
+
+  // --- Rate limiter cleanup (prevent memory leak) ---
+  const cleanupInterval = setInterval(() => {
+    const now = Date.now();
+    for (const [ip, record] of rateLimitStore.entries()) {
+      if (now > record.resetTime) {
+        rateLimitStore.delete(ip);
+      }
+    }
+  }, 60_000); // Clean every 60s
+
+  // Clear cleanup interval on process termination
+  const cleanupHandler = () => clearInterval(cleanupInterval);
+  process.on("SIGTERM", cleanupHandler);
+  process.on("SIGINT", cleanupHandler);
 
   app.use(
     cors({

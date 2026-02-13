@@ -24,6 +24,16 @@ export {
 } from "./types.js";
 
 // ---------------------------------------------------------------------------
+// Configuration
+// ---------------------------------------------------------------------------
+
+/** Query timeout in milliseconds (0 = no timeout) */
+export const QUERY_TIMEOUT_MS = parseInt(
+  process.env.COZO_QUERY_TIMEOUT || "30000",
+  10,
+);
+
+// ---------------------------------------------------------------------------
 // Client factory
 // ---------------------------------------------------------------------------
 
@@ -41,14 +51,35 @@ export function createCozoClient(
 // Query execution
 // ---------------------------------------------------------------------------
 
-/** Execute a Datalog query with optional parameters. */
+/**
+ * Execute a Datalog query with optional parameters.
+ *
+ * Automatically applies timeout based on COZO_QUERY_TIMEOUT env var.
+ * Set to 0 to disable timeout.
+ */
 export async function executeQuery(
   db: CozoDb,
   query: string,
   params: Record<string, unknown> = {},
 ): Promise<QueryResult> {
   try {
-    const result = await db.run(query, params);
+    let result;
+
+    if (QUERY_TIMEOUT_MS > 0) {
+      // Race between query execution and timeout
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(
+          () => reject(new Error(`Query timeout (${QUERY_TIMEOUT_MS}ms)`)),
+          QUERY_TIMEOUT_MS,
+        );
+      });
+
+      result = await Promise.race([db.run(query, params), timeoutPromise]);
+    } else {
+      // No timeout
+      result = await db.run(query, params);
+    }
+
     return {
       headers: result.headers,
       rows: result.rows,
@@ -59,6 +90,21 @@ export async function executeQuery(
       error instanceof Error ? error.message : String(error),
       "QUERY_ERROR",
     );
+  }
+}
+
+/**
+ * Close the CozoDB client connection gracefully.
+ *
+ * Should be called during application shutdown to ensure
+ * all pending operations complete and resources are released.
+ */
+export async function closeCozoClient(db: CozoDb): Promise<void> {
+  try {
+    await db.close();
+  } catch (error) {
+    // Ignore close errors (already closed, etc.)
+    console.error("Error closing CozoDB:", error);
   }
 }
 
